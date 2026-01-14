@@ -30,17 +30,10 @@ exports.register = async (req, res) => {
       });
     }
 
-  
-
-
-
-
-
-
-try {
+    // --- LOGIC MOVED OUT OF NESTED TRY ---
     const otp = generateOTP();
 
-    // 1. Attempt to create the user in the database
+    // 1. Create the user
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -50,35 +43,14 @@ try {
     });
 
     // 2. Attempt to send the email
+    // Note: If this fails, the main catch block will handle it
     await sendEmail({
       to: normalizedEmail,
       subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
       text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
     });
 
-    // Success response
-    res.status(201).json({ message: "User registered. Please check your email for the OTP." });
-
-} catch (error) {
-    // 3. Handle specific errors (like duplicate emails)
-    if (error.code === 11000) {
-        return res.status(400).json({ error: "Email already exists." });
-    }
-
-    console.error("Registration Error:", error);
-    res.status(500).json({ error: "Internal server error during registration." });
-}
-
-
-
-
-
-
-
-
-
-
-
+    // 3. Generate Token (User is now accessible here!)
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -87,7 +59,7 @@ try {
 
     return res.status(201).json({
       success: true,
-      message: "Registration successful. Please check your email to verify your account.",
+      message: "Registration successful. Please check your email for the OTP.",
       token,
       user: {
         id: user._id,
@@ -98,13 +70,19 @@ try {
     });
 
   } catch (error) {
+    // Handle MongoDB duplicate key error specifically if needed
+    if (error.code === 11000) {
+        return res.status(400).json({ success: false, message: "Email already exists." });
+    }
+
     console.error("Registration error:", error);
     return res.status(500).json({
       success: false,
-      message: "Registration failed. Please try again."
+      message: error.message || "Registration failed. Please try again."
     });
   }
 };
+
 
 
 

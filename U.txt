@@ -285,3 +285,218 @@ const hashedPassword = await bcrypt.hash(password, 10); // ✅ No .trim()
       subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
       text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
     });
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email and password are required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered, try logging in"
+      });
+    }
+
+  
+
+
+
+
+
+
+try {
+    const otp = generateOTP();
+
+    // 1. Attempt to create the user in the database
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: password, 
+      emailOTP: otp,
+      emailOTPExpires: Date.now() + 10 * 60 * 1000
+    });
+
+    // 2. Attempt to send the email
+    await sendEmail({
+      to: normalizedEmail,
+      subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
+      text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
+    });
+
+    // Success response
+    res.status(201).json({ message: "User registered. Please check your email for the OTP." });
+
+} catch (error) {
+    // 3. Handle specific errors (like duplicate emails)
+    if (error.code === 11000) {
+        return res.status(400).json({ error: "Email already exists." });
+    }
+
+    console.error("Registration Error:", error);
+    res.status(500).json({ error: "Internal server error during registration." });
+}
+
+
+
+
+
+
+
+
+
+
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful. Please check your email to verify your account.",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed. Please try again."
+    });
+  }
+};
+
+
+
+
+
+
+
+
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email and password are required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered, try logging in"
+      });
+    }
+
+  
+
+
+
+
+
+
+try {
+    const otp = generateOTP();
+
+    // 1. Attempt to create the user in the database
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: password, 
+      emailOTP: otp,
+      emailOTPExpires: Date.now() + 10 * 60 * 1000
+    });
+
+    // 2. Attempt to send the email
+    await sendEmail({
+      to: normalizedEmail,
+      subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
+      text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
+    });
+
+    // Success response
+    res.status(201).json({ message: "User registered. Please check your email for the OTP." });
+
+} catch (error) {
+    // 3. Handle specific errors (like duplicate emails)
+    if (error.code === 11000) {
+        return res.status(400).json({ error: "Email already exists." });
+    }
+
+    console.error("Registration Error:", error);
+    res.status(500).json({ error: "Internal server error during registration." });
+}
+
+
+
+
+
+
+
+
+
+
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful. Please check your email to verify your account.",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed. Please try again."
+    });
+  }
+};
