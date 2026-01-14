@@ -264,3 +264,24 @@ const hashedPassword = await bcrypt.hash(password, 10); // ✅ No .trim()
     });
   }
 };
+
+
+
+
+
+  
+    const otp = generateOTP();
+
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: password,  // ore plain password, model will hash it
+      emailOTP: otp,
+      emailOTPExpires: Date.now() + 10 * 60 * 1000
+    });
+
+    await sendEmail({
+      to: normalizedEmail,
+      subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
+      text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
+    });

@@ -9,13 +9,6 @@ const generateOTP = () =>
 /* REGISTER */
 
 
-
-
-
-
-
-
-
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -37,22 +30,54 @@ exports.register = async (req, res) => {
       });
     }
 
-    // DON'T hash here - let the model do it
+  
+
+
+
+
+
+
+try {
     const otp = generateOTP();
 
+    // 1. Attempt to create the user in the database
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: password,  // ✅ Store plain password, model will hash it
+      password: password, 
       emailOTP: otp,
       emailOTPExpires: Date.now() + 10 * 60 * 1000
     });
 
+    // 2. Attempt to send the email
     await sendEmail({
       to: normalizedEmail,
       subject: "Verify your email - ACCESS-TRAVEL NOREPLY",
       text: `Your verification OTP is ${otp}. This code will expire in 10 minutes.`
     });
+
+    // Success response
+    res.status(201).json({ message: "User registered. Please check your email for the OTP." });
+
+} catch (error) {
+    // 3. Handle specific errors (like duplicate emails)
+    if (error.code === 11000) {
+        return res.status(400).json({ error: "Email already exists." });
+    }
+
+    console.error("Registration Error:", error);
+    res.status(500).json({ error: "Internal server error during registration." });
+}
+
+
+
+
+
+
+
+
+
+
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -142,24 +167,6 @@ exports.verifyEmail = async (req, res) => {
 };
 
 /* LOGIN */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 exports.login = async (req, res) => {
   try {
